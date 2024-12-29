@@ -1,0 +1,47 @@
+﻿@page "/details/{Id:int}"
+@inject TodoService TodoService
+@inject NavigationManager NavigationManager
+@using BlazorApp1.Services
+
+<h3 class="text-primary">Task Details</h3>
+
+@if (todo == null)
+{
+    <div class="alert alert-warning">Loading...</div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">@todo.Title</h5>
+            <p class="card-text"><strong>Description:</strong> @todo.Description</p>
+            <p class="card-text">
+                <strong>Status:</strong> @(todo.IsCompleted ? "Completed" : "Pending")
+            </p>
+            <button class="btn btn-secondary" @onclick="GoBack">Back to List</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private TodoItem? todo;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            todo = await TodoService.GetTodoByIdAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching todo details: {ex.Message}");
+        }
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}

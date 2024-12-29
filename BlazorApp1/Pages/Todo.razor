@@ -1,0 +1,47 @@
+﻿@page "/todo"
+@inject TodoService TodoService
+@using BlazorApp1.Services
+
+<div class="container mt-5">
+    <div class="card shadow-sm p-4">
+        <h3 class="text-primary mb-4">Add New Todo</h3>
+        <EditForm Model="newTodo" OnValidSubmit="AddTodo" class="form-inline">
+            <div class="mb-3">
+                <label for="todoTitle" class="form-label">Title:</label>
+                <InputText id="todoTitle" class="form-control w-75" @bind-Value="newTodo.Title" placeholder="Enter the task title" />
+            </div>
+
+            <div class="mb-3">
+                <label for="todoDescription" class="form-label">Description:</label>
+                <InputTextArea id="todoDescription" class="form-control w-75" @bind-Value="newTodo.Description" placeholder="Enter a detailed description" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-plus"></i> Add Task
+            </button>
+        </EditForm>
+    </div>
+
+</div>
+
+@code {
+    private TodoItem newTodo = new();
+
+    private async Task AddTodo()
+    {
+        try
+        {
+            // Call API to add new todo
+            await TodoService.AddTodoAsync(newTodo);
+
+            // Reset the form fields
+            newTodo = new TodoItem();
+
+            Console.WriteLine("Todo added successfully.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding todo: {ex.Message}");
+        }
+    }
+}

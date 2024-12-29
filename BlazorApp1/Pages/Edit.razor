@@ -1,0 +1,110 @@
+﻿@page "/edit"
+@inject NavigationManager NavigationManager
+@inject TodoService TodoService
+@using BlazorApp1.Services
+
+<div class="container mt-5">
+    <h3 class="text-primary mb-4 text-center">Todo List</h3>
+
+    @if (todos == null || !todos.Any())
+    {
+        <div class="alert alert-info text-center">No todos found.</div>
+    }
+    else
+    {
+        <ul class="list-group">
+            @foreach (var todo in todos)
+            {
+                <li class="list-group-item py-3">
+                    <div class="row g-3 align-items-center">
+                        <!-- Checkbox and Title -->
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <input class="form-check-input me-2" type="checkbox"
+                                       id="@($"todo_{todo.Id}")" checked="@todo.IsCompleted"
+                                       @onchange="(e) => UpdateTodoStatus(todo, e.Value)" />
+                                <input type="text" class="form-control"
+                                       value="@todo.Title"
+                                       @onchange="(e) => UpdateTodoTitle(todo, e.Value.ToString())"
+                                       placeholder="Edit Title" />
+                            </div>
+                        </div>
+
+                        <!-- Description Field -->
+                        <div class="col-md-5">
+                            <textarea class="form-control" rows="2"
+                                      @onchange="(e) => UpdateTodoDescription(todo, e.Value.ToString())"
+                                      placeholder="Edit Description">@todo.Description</textarea>
+                        </div>
+
+                        <!-- Update Button -->
+                        <div class="col-md-3 text-end">
+                            <button class="btn btn-sm btn-success" @onclick="() => SaveTodo(todo)">
+                                <i class="bi bi-save"></i> Update
+                            </button>
+                        </div>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+
+    <div class="mt-4 text-center">
+        <button class="btn btn-primary" @onclick="GetAllTodos">
+            <i class="bi bi-arrow-repeat"></i> Fetch Todos
+        </button>
+    </div>
+</div>
+
+@code {
+    private List<TodoItem> todos = new();
+
+    private async Task GetAllTodos()
+    {
+        try
+        {
+            todos = await TodoService.GetTodosAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching todos: {ex.Message}");
+        }
+    }
+
+    private void UpdateTodoTitle(TodoItem todo, string? newTitle)
+    {
+        if (!string.IsNullOrWhiteSpace(newTitle))
+        {
+            todo.Title = newTitle;
+        }
+    }
+
+    private void UpdateTodoDescription(TodoItem todo, string? newDescription)
+    {
+        if (!string.IsNullOrWhiteSpace(newDescription))
+        {
+            todo.Description = newDescription;
+        }
+    }
+
+    private async Task UpdateTodoStatus(TodoItem todo, object? isChecked)
+    {
+        if (isChecked is bool completed)
+        {
+            todo.IsCompleted = completed;
+        }
+    }
+
+    private async Task SaveTodo(TodoItem todo)
+    {
+        try
+        {
+            await TodoService.UpdateTodoAsync(todo);
+            Console.WriteLine($"Todo {todo.Id} updated successfully.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating todo {todo.Id}: {ex.Message}");
+        }
+    }
+}

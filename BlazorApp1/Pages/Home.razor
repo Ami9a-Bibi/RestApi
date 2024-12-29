@@ -1,0 +1,128 @@
+﻿@page "/"
+@inject NavigationManager NavigationManager
+@inject TodoService TodoService
+@using BlazorApp1.Services
+
+<div class="container mt-5">
+    <h3 class="text-primary mb-4">Todo List</h3>
+
+    @if (todos == null || !todos.Any())
+    {
+        <div class="alert alert-info">No todos found.</div>
+    }
+    else
+    {
+        <ul class="list-group">
+            @foreach (var todo in todos)
+            {
+                <li class="list-group-item">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <input class="form-check-input me-2" type="checkbox"
+                                   id="@($"todo_{todo.Id}")" checked="@todo.IsCompleted"
+                                   @onchange="(e) => UpdateTodoStatus(todo, e.Value)" />
+                            <input type="text" class="form-control d-inline-block w-75"
+                                   value="@todo.Title"
+                                   @onchange="(e) => UpdateTodoTitle(todo, e.Value.ToString())" />
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <button class="btn btn-sm btn-info me-2" @onclick="() => NavigateToDetails(todo.Id)">
+                                <i class="bi bi-info-circle"></i> Details
+                            </button>
+                            <button class="btn btn-sm btn-success me-2" @onclick="() => SaveTodo(todo)">
+                                <i class="bi bi-save"></i> Update
+                            </button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteTodo(todo.Id)">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </div>
+
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+
+    <div class="mt-3">
+        <button class="btn btn-success" @onclick="GetAllTodos">
+            <i class="bi bi-arrow-repeat"></i> Fetch Todos
+        </button>
+    </div>
+</div>
+
+@code {
+    private List<TodoItem> todos = new();
+    private TodoItem newTodo = new();
+
+    private async Task GetAllTodos()
+    {
+        try
+        {
+            todos = await TodoService.GetTodosAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching todos: {ex.Message}");
+        }
+    }
+
+    private void NavigateToDetails(int todoId)
+    {
+        NavigationManager.NavigateTo($"/details/{todoId}");
+    }
+    private async Task AddTodo()
+    {
+        try
+        {
+            await TodoService.AddTodoAsync(newTodo);
+            await GetAllTodos();
+            newTodo = new TodoItem();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding todo: {ex.Message}");
+        }
+    }
+
+    private void UpdateTodoTitle(TodoItem todo, string? newTitle)
+    {
+        if (!string.IsNullOrWhiteSpace(newTitle))
+        {
+            todo.Title = newTitle;
+        }
+    }
+
+    private async Task UpdateTodoStatus(TodoItem todo, object? isChecked)
+    {
+        if (isChecked is bool completed)
+        {
+            todo.IsCompleted = completed;
+        }
+    }
+
+    private async Task SaveTodo(TodoItem todo)
+    {
+        try
+        {
+            await TodoService.UpdateTodoAsync(todo);
+            Console.WriteLine($"Todo {todo.Id} updated successfully.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating todo {todo.Id}: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteTodo(int id)
+    {
+        try
+        {
+            await TodoService.DeleteTodoAsync(id);
+            await GetAllTodos();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting todo: {ex.Message}");
+        }
+    }
+}
